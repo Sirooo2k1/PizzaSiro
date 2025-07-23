@@ -43,7 +43,7 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    const response = await fetch("http://localhost:3000/api/chat", { // URL backend rõ ràng
+    const response = await fetch("/api/chat", { // ✅ ĐÃ SỬA chỗ này
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
