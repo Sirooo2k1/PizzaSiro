@@ -43,14 +43,16 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    const response = await fetch("https://pizzasirojp.vercel.app/api/chat", { // ✅ SỬA DUY NHẤT DÒNG NÀY
+    fetch("https://pizzabackend.vercel.app/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        message: text,
-        sessionId: "user123",
+        message: userMessage,
+        sessionId: "user123"
       }),
-    });
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
