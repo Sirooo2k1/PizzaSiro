@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIZZERIA</title>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="./css/styleweb.css">
+    <!-- Chatbot style -->
+    <link rel="stylesheet" href="./css/chatbotstyle.css">
+</head>
+<body>
+  <h1><img src="./images/logo.png" alt="PIZZERIA" width="600" height="400"></h1>
+  <div class="centered-block">
+      <ul>
+        <li><a href="#section1">新商品</a></li>
+        <li class="line"><a href="#section2">美味しい食べ方</a></li>
+        <li><a href="#section3">店舗情報</a></li>
+      </ul>
+      <section id="section1">
+        <h2>新商品</h2>
+        <img src="./images/piza-1.jpg" alt="新商品" width="1240" height="400">
+        <table class="price-table">
+          <thead>
+            <tr><th>M サイズ</th><th>R サイズ</th><th>L サイズ</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>約 23cm</td><td>約 28cm </td><td>約 33cm</td></tr>
+            <tr><td>¥3,000</td><td colspan="2">¥3,599</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section id="section2">
+        <h2>美味しい食べ方</h2>
+        <img src="./images/piza-2.jpg" alt="美味しい食べ方" width="1240" height="400">
+        <ol>
+          <li>オーブントースターやオーブンレンジなどは<strong>高温の予熱をセット</strong>してから焼くと、よりカリッと美味しく焼けます！</strong></li>
+          <li>焼く前に霧吹きや濡らしたキッチンペーパーなどで<strong>生地の耳部分などを濡らしておく</strong>と、もっちり仕上がります！</strong></li>
+        </ol>
+      </section>
+      <section id="section3">
+        <h2>店舗情報</h2>
+        <img src="./images/piza-3.jpg" alt="店舗情報" width="1240" height="400">
+        <p>PIZZERIA</p>
+        <p>〒592-8344 大阪府堺市西区浜寺南町１丁目８９-１</p>
+        <p><a href="https://maps.app.goo.gl/Q8VhmcAZqrCo3ZVy5" target="_blank">[地図]</a></p>
+      </section>
+    </div>
+    <footer>
+      <small>©Copyright 2024 PIZZERIA All rights reserved.</small>
+    </footer>
+    <!-- Chatbot HTML -->
+    <div class="chatbot-container">
+      <div class="chatbot-header">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712032.png" alt="bot icon" class="bot-icon" />
+        <span class="bot-title">Siro Chatbot 🍕</span>
+      </div>
+      <div class="chatbot-messages" id="chat-messages">
+        <div class="message bot">こんにちは！PIZZERIAへようこそ！ご質問があればお知らせください！</div>
+      </div>
+      <div class="chatbot-input">
+        <input type="text" id="user-input" placeholder="メッセージを入力..." />
+        <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        <button id="reset-btn" class="reset-btn" title="New Chat">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chatbot JS -->
+    <script src="./chatbotscript.js"></script>
+</body>
+</html>
+

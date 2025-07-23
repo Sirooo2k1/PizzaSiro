@@ -1,0 +1,121 @@
+/* chatbostyle.css - チャットボット専用のスタイル */
+
+/* チャットボット全体のコンテナ設定 */
+.chatbot-container {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  width: 320px !important;
+  height: 400px !important;
+  background: #fff !important;
+  border-radius: 15px !important;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+  font-family: 'Segoe UI', sans-serif !important;
+}
+
+.chatbot-container {
+  font-family: 'Open Sans', sans-serif !important;
+}
+
+.chatbot-header {
+  background: #ff9966 !important;
+  color: white !important;
+  padding: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.bot-icon {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.bot-title {
+  font-weight: bold !important;
+  font-size: 16px !important;
+}
+
+.chatbot-messages {
+  flex: 1 !important;
+  padding: 10px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #f9f9f9 !important;
+  word-break: break-word !important;
+}
+
+/* 共通メッセージ */
+.message {
+  margin: 6px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 12px !important;
+  max-width: 100% !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  box-sizing: border-box !important;
+  display: inline-block !important;
+}
+
+/* チャットボットメッセージスタイル */
+.message.bot {
+  background: #e6f2ff !important;
+  align-self: flex-start !important;
+}
+
+/* ユーザーメッセージスタイル */
+.message.user {
+  background: #d1ffd6 !important;
+  align-self: flex-end !important;
+}
+
+.chatbot-input {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  padding: 8px !important;
+  border-top: 1px solid #ddd !important;
+  background: white !important;
+}
+
+.chatbot-input input {
+  flex: 1 !important;
+  border: none !important;
+  background: #f1f1f1 !important;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+}
+
+.chatbot-input input:focus {
+  outline: none !important;
+}
+
+.chatbot-input button {
+  background: #ff9966 !important;
+  color: white !important;
+  border: none !important;
+  margin-left: 8px !important;
+  padding: 8px 12px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  font-size: 18px !important;
+  transition: background 0.3s, transform 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chatbot-input button:hover {
+  background: #ff7a33 !important;
+  transform: scale(1.1);
+}
