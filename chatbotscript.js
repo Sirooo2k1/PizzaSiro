@@ -43,7 +43,7 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    const response = await fetch("/api/chat", { // ✅ ĐÃ SỬA chỗ này
+    const response = await fetch("https://pizzasiro.vercel.app/api/chat", { // ✅ SỬA DUY NHẤT DÒNG NÀY
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
