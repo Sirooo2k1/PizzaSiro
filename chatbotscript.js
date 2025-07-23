@@ -7,11 +7,10 @@ const chatMessages = document.getElementById("chat-messages");
 // Hàm hiển thị tin nhắn vào khung chat
 function appendMessage(text, sender) {
   const messageDiv = document.createElement("div");
-  messageDiv.classList.add("message");
-  messageDiv.classList.add(sender); // "user" hoặc "bot"
+  messageDiv.classList.add("message", sender); // Thêm cả hai class
   messageDiv.textContent = text;
   chatMessages.appendChild(messageDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight; // tự cuộn xuống dưới
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Hàm reset chat
@@ -43,16 +42,14 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    fetch("https://pizzasirojp.vercel.app/api/chat", {
+    const response = await fetch("http://localhost:3000/api/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message: userMessage,
-        sessionId: "user123"
+        message: text,
+        sessionId: "user123",
       }),
-    })
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -60,17 +57,23 @@ async function sendMessage() {
 
     const data = await response.json();
 
-    const loadingMsg = document.querySelector(".message.bot:last-child");
-    if (loadingMsg && loadingMsg.textContent === "返信中です...") {
-      loadingMsg.remove();
+    // Xoá tin nhắn "返信中です..."
+    const botMessages = chatMessages.querySelectorAll(".message.bot");
+    const lastBotMsg = botMessages[botMessages.length - 1];
+    if (lastBotMsg && lastBotMsg.textContent === "返信中です...") {
+      lastBotMsg.remove();
     }
-    appendMessage(data.reply, "bot");
+
+    appendMessage(data.reply || "（返答がありません）", "bot");
   } catch (error) {
     console.error("Error sending message:", error);
-    const loadingMsg = document.querySelector(".message.bot:last-child");
-    if (loadingMsg && loadingMsg.textContent === "返信中です...") {
-      loadingMsg.remove();
+
+    const botMessages = chatMessages.querySelectorAll(".message.bot");
+    const lastBotMsg = botMessages[botMessages.length - 1];
+    if (lastBotMsg && lastBotMsg.textContent === "返信中です...") {
+      lastBotMsg.remove();
     }
+
     appendMessage("申し訳ありません。現在返信できません。", "bot");
   }
 }
