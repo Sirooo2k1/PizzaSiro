@@ -43,7 +43,7 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    fetch("https://pizzabackend.vercel.app/api/chat", {
+    fetch("https://pizzasirojp.vercel.app/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
