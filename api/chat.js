@@ -1,26 +1,25 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import OpenAI from "openai"; // ✅ Sửa tại đây
+import OpenAI from "openai";
 
-dotenv.config();
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// セッションIDごとにチャット履歴を保存するオブジェクト
+// セッションごとのチャット履歴を保持するオブジェクト
 const chatHistories = {};
 
-// ✅ Sửa phần cấu hình OpenAI
+// OpenAI クライアントの初期化（APIキーは Vercel の環境変数に設定）
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-app.post("/api/chat", async (req, res) => {
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "POSTメソッドのみ許可されています。" });
+  }
+
   const { message, sessionId = "default" } = req.body;
 
-  // セッションの履歴がなければ初期化（system promptを含む）
+  if (!message || typeof message !== "string") {
+    return res.status(400).json({ message: "無効なメッセージです。" });
+  }
+
+  // セッション履歴が存在しない場合は初期化
   if (!chatHistories[sessionId]) {
     chatHistories[sessionId] = [
       {
@@ -100,26 +99,25 @@ Engage in light-hearted chat, ask about food preferences, suggest unique or new 
 
 Offer to play mini games like pizza trivia, or share fun messages to create a joyful vibe before closing the order.
 
-Always maintain a warm, attentive tone — never too casual — with the goal of making the customer feel cared for while encouraging them to place an order.`
+Always maintain a warm, attentive tone — never too casual — with the goal of making the customer feel cared for while encouraging them to place an order.`,
       },
     ];
   }
 
-  // ユーザーからのメッセージを履歴に追加
+  // ユーザーのメッセージを履歴に追加
   chatHistories[sessionId].push({
     role: "user",
     content: message,
   });
 
-  // 履歴が長くなりすぎないように最大20メッセージに制限
+  // 履歴が長くなりすぎないよう最大20件に制限
   if (chatHistories[sessionId].length > 20) {
     chatHistories[sessionId].splice(1, chatHistories[sessionId].length - 20);
   }
 
   try {
-    // ✅ Sửa phần gọi API theo chuẩn v5
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-nano", // もしくは "gpt-4"
+      model: "gpt-4.1-nano", // 必要に応じて変更可能
       messages: chatHistories[sessionId],
       temperature: 0.7,
       max_tokens: 150,
@@ -127,21 +125,15 @@ Always maintain a warm, attentive tone — never too casual — with the goal of
 
     const reply = completion.choices[0].message.content.trim();
 
-    // アシスタントの回答を履歴に追加
+    // アシスタントの応答を履歴に追加
     chatHistories[sessionId].push({
       role: "assistant",
       content: reply,
     });
 
-    // フロントエンドに返信を返す
-    res.json({ reply });
-  } catch (error) {
-    console.error("OpenAI API Error:", error);
-    res.status(500).json({ reply: "申し訳ありません。現在ご返答できません。" });
+    return res.status(200).json({ reply });
+  } catch (err) {
+    console.error("OpenAI API エラー:", err);
+    return res.status(500).json({ reply: "申し訳ありません。現在応答できません。" });
   }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`サーバーはポート${PORT}で起動しています`);
-});
+}

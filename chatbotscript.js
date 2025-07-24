@@ -42,12 +42,12 @@ async function sendMessage() {
   appendMessage("返信中です...", "bot");
 
   try {
-    const response = await fetch("http://localhost:3000/api/chat", {
+    const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
-        sessionId: "user123",
+        sessionId: "user",
       }),
     });
 
