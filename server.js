@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai"; // ✅ Sửa tại đây
+import OpenAI from "openai"; 
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -9,27 +10,102 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Khởi tạo Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase credentials. Please check your .env file.');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // セッションIDごとにチャット履歴を保存するオブジェクト
 const chatHistories = {};
 
-// ✅ Sửa phần cấu hình OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Hàm để lưu conversation vào Supabase
+async function saveConversationToSupabase(conversationId, messages) {
+  try {
+    console.log('Attempting to save conversation to Supabase:', {
+      conversationId,
+      messageCount: messages.length,
+      supabaseUrl: supabaseUrl ? 'Configured' : 'Missing',
+      supabaseKey: supabaseKey ? 'Configured' : 'Missing'
+    });
+
+    const { data, error } = await supabase
+      .from('conversations')
+      .upsert({
+        conversation_id: conversationId,
+        messages: messages,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'conversation_id'
+      });
+
+    if (error) {
+      console.error('Error saving to Supabase:', error);
+      throw error;
+    }
+    
+    console.log('Successfully saved conversation to Supabase:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to save conversation:', error);
+    throw error;
+  }
+}
+
+// Hàm để lấy conversation từ Supabase
+async function getConversationFromSupabase(conversationId) {
+  try {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('messages')
+      .eq('conversation_id', conversationId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 là "not found"
+      console.error('Error fetching from Supabase:', error);
+      throw error;
+    }
+    
+    return data ? data.messages : null;
+  } catch (error) {
+    console.error('Failed to fetch conversation:', error);
+    return null;
+  }
+}
+
 app.post("/api/chat", async (req, res) => {
   const { message, sessionId = "default" } = req.body;
 
-  // セッションの履歴がなければ初期化（system promptを含む）
-  if (!chatHistories[sessionId]) {
-    chatHistories[sessionId] = [
-      {
-        role: "system",
-        content: `You are a friendly and professional virtual assistant of Pizza House, responsible for consulting, supporting, and chatting with customers on the website.
+  console.log('Received chat request:', { message, sessionId });
+
+  try {
+    // Thử lấy conversation từ Supabase trước
+    let conversationHistory = await getConversationFromSupabase(sessionId);
+    
+    // Nếu không có trong Supabase, kiểm tra trong memory
+    if (!conversationHistory && chatHistories[sessionId]) {
+      conversationHistory = chatHistories[sessionId];
+    }
+    
+    // Nếu vẫn không có, tạo mới với system prompt
+    if (!conversationHistory) {
+      conversationHistory = [
+        {
+          role: "system",
+          content: `You are a friendly and professional virtual assistant of Pizza House, responsible for consulting, supporting, and chatting with customers on the website.
 
 Response Guidelines:
 
-Always use a warm, friendly, and approachable tone. Refer to yourself as “I” and call the customer “you.”
+Always use a warm, friendly, and approachable tone. Refer to yourself as "I" and call the customer "you."
 
 Keep your responses short, clear, and to the point while remaining polite and cheerful.
 
@@ -42,7 +118,7 @@ Ask only one question at a time.
 Main Situations and Response Strategies:
 1. Product Introduction
 
-If the customer is interested in products → Suggest popular pizzas (cheese, seafood, vegetarian, BBQ, etc.) and ask if they’d like to view the menu.
+If the customer is interested in products → Suggest popular pizzas (cheese, seafood, vegetarian, BBQ, etc.) and ask if they'd like to view the menu.
 
 Recommend pizza sizes (small, medium, large) and side dishes like fries, salad, and drinks.
 
@@ -101,23 +177,24 @@ Engage in light-hearted chat, ask about food preferences, suggest unique or new 
 Offer to play mini games like pizza trivia, or share fun messages to create a joyful vibe before closing the order.
 
 Always maintain a warm, attentive tone — never too casual — with the goal of making the customer feel cared for while encouraging them to place an order.`
-      },
-    ];
-  }
+        },
+      ];
+    }
 
-  // ユーザーからのメッセージを履歴に追加
-  chatHistories[sessionId].push({
-    role: "user",
-    content: message,
-  });
+    // Cập nhật conversation history trong memory
+    chatHistories[sessionId] = conversationHistory;
 
-  // 履歴が長くなりすぎないように最大20メッセージに制限
-  if (chatHistories[sessionId].length > 20) {
-    chatHistories[sessionId].splice(1, chatHistories[sessionId].length - 20);
-  }
+    // ユーザーからのメッセージを履歴に追加
+    chatHistories[sessionId].push({
+      role: "user",
+      content: message,
+    });
 
-  try {
-    // ✅ Sửa phần gọi API theo chuẩn v5
+    // 履歴が長くなりすぎないように最大20メッセージに制限
+    if (chatHistories[sessionId].length > 20) {
+      chatHistories[sessionId].splice(1, chatHistories[sessionId].length - 20);
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-nano", // もしくは "gpt-4"
       messages: chatHistories[sessionId],
@@ -133,11 +210,93 @@ Always maintain a warm, attentive tone — never too casual — with the goal of
       content: reply,
     });
 
+    // Lưu conversation vào Supabase
+    console.log('About to save conversation to Supabase with sessionId:', sessionId);
+    await saveConversationToSupabase(sessionId, chatHistories[sessionId]);
+
     // フロントエンドに返信を返す
     res.json({ reply });
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("Error in chat endpoint:", error);
     res.status(500).json({ reply: "申し訳ありません。現在ご返答できません。" });
+  }
+});
+
+// API endpoint để lấy conversation history
+app.get("/api/conversations/:conversationId", async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const conversation = await getConversationFromSupabase(conversationId);
+    
+    if (conversation) {
+      res.json({ conversation });
+    } else {
+      res.status(404).json({ error: "Conversation not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    res.status(500).json({ error: "Failed to fetch conversation" });
+  }
+});
+
+// Test endpoint để kiểm tra cấu hình Supabase
+app.get("/api/test-supabase", async (req, res) => {
+  try {
+    console.log('Testing Supabase connection...');
+    console.log('Supabase URL:', supabaseUrl ? 'Configured' : 'Missing');
+    console.log('Supabase Key:', supabaseKey ? 'Configured' : 'Missing');
+    
+    // Test connection bằng cách lấy tất cả conversations
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .limit(1);
+
+    if (error) {
+      console.error('Supabase connection error:', error);
+      res.status(500).json({ 
+        error: "Supabase connection failed", 
+        details: error.message,
+        supabaseUrl: supabaseUrl ? 'Configured' : 'Missing',
+        supabaseKey: supabaseKey ? 'Configured' : 'Missing'
+      });
+    } else {
+      console.log('Supabase connection successful');
+      res.json({ 
+        message: "Supabase connection successful", 
+        data: data,
+        supabaseUrl: supabaseUrl ? 'Configured' : 'Missing',
+        supabaseKey: supabaseKey ? 'Configured' : 'Missing'
+      });
+    }
+  } catch (error) {
+    console.error("Error testing Supabase:", error);
+    res.status(500).json({ 
+      error: "Failed to test Supabase", 
+      details: error.message,
+      supabaseUrl: supabaseUrl ? 'Configured' : 'Missing',
+      supabaseKey: supabaseKey ? 'Configured' : 'Missing'
+    });
+  }
+});
+
+// API endpoint để lấy tất cả conversations
+app.get("/api/conversations", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching conversations:', error);
+      throw error;
+    }
+
+    res.json({ conversations: data });
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ error: "Failed to fetch conversations" });
   }
 });
 

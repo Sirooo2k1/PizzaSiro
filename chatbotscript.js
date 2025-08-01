@@ -4,6 +4,16 @@ const sendBtn = document.getElementById("send-btn");
 const resetBtn = document.getElementById("reset-btn");
 const chatMessages = document.getElementById("chat-messages");
 
+// Tạo sessionId động hoặc lấy từ localStorage
+function getSessionId() {
+  let sessionId = localStorage.getItem('chatSessionId');
+  if (!sessionId) {
+    sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('chatSessionId', sessionId);
+  }
+  return sessionId;
+}
+
 // Hàm hiển thị tin nhắn vào khung chat
 function appendMessage(text, sender) {
   const messageDiv = document.createElement("div");
@@ -17,6 +27,9 @@ function appendMessage(text, sender) {
 // Hàm reset chat
 function resetChat() {
   chatMessages.innerHTML = "";
+  // Tạo sessionId mới khi reset
+  const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('chatSessionId', newSessionId);
   appendMessage("こんにちは！PIZZERIAへようこそ！ご質問があればお知らせください！", "bot");
 }
 
@@ -48,7 +61,7 @@ async function sendMessage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
-        sessionId: "user123",
+        sessionId: getSessionId(),
       }),
     });
 
@@ -72,3 +85,8 @@ async function sendMessage() {
     appendMessage("申し訳ありません。現在返信できません。", "bot");
   }
 }
+
+// Khởi tạo chat khi trang được load
+document.addEventListener('DOMContentLoaded', function() {
+  appendMessage("こんにちは！PIZZERIAへようこそ！ご質問があればお知らせください！", "bot");
+});
